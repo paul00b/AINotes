@@ -17,7 +17,9 @@
     "processing": "Organisation en cours...",
     "noSpeech": "Aucune parole détectée",
     "notSupported": "La reconnaissance vocale n'est pas supportée par votre navigateur. Utilisez Chrome ou Edge.",
-    "textPlaceholder": "Ou tapez votre texte ici..."
+    "textPlaceholder": "Ou tapez votre texte ici...",
+    "releaseToStop": "Relâchez pour arrêter",
+    "editBeforeSending": "Modifiez si besoin, puis confirmez"
   },
   "ai": {
     "confirmTitle": "Voici ce que j'ai compris",

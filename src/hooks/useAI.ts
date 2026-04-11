@@ -8,7 +8,7 @@ export function useAI() {
   const [result, setResult] = useState<AIResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  async function process(text: string, existingLists: TaskList[], lang: string) {
+  async function process(text: string, existingLists: TaskList[], lang: string, existingTasks: Record<string, string[]> = {}) {
     setIsProcessing(true)
     setError(null)
     setResult(null)
@@ -18,7 +18,7 @@ export function useAI() {
 
       let response: AIResponse
       if (apiKey) {
-        response = await organizeWithAI(text, existingLists, lang)
+        response = await organizeWithAI(text, existingLists, lang, existingTasks)
       } else {
         // Fallback to offline
         response = organizeOffline(text, lang)

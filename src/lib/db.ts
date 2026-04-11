@@ -37,4 +37,10 @@ db.version(1).stores({
   voiceEntries: 'id, createdAt',
 })
 
+db.version(2).stores({
+  lists: 'id, name, order, createdAt',
+  tasks: 'id, listId, order, createdAt',
+  voiceEntries: 'id, createdAt',
+})
+
 export { db }

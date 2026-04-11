@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { STORAGE_KEYS } from './constants'
 import type { TaskList } from './db'
 
@@ -14,37 +13,70 @@ export interface AIResponse {
   lists: AIListResult[]
 }
 
-function buildPrompt(userText: string, existingLists: TaskList[], lang: string): string {
+function buildPrompt(
+  userText: string,
+  existingLists: TaskList[],
+  lang: string,
+  existingTasks: Record<string, string[]> = {},
+): string {
   const isFr = lang.startsWith('fr')
+  const none = isFr ? 'Aucune' : 'None'
+
   const listsDescription = existingLists.length > 0
-    ? existingLists.map((l) => `- "${l.name}" (${l.icon})`).join('\n')
-    : isFr ? 'Aucune' : 'None'
+    ? existingLists.map((l) => {
+        const tasks = existingTasks[l.id] ?? []
+        const preview = tasks.length > 0
+          ? ` — contains: ${tasks.slice(0, 8).join(', ')}${tasks.length > 8 ? '...' : ''}`
+          : ' — empty'
+        return `- "${l.name}" (${l.icon}, id: "${l.id}")${preview}`
+      }).join('\n')
+    : none
 
   const langInstruction = isFr
     ? 'Réponds en français.'
     : 'Respond in English.'
 
-  return `You are an organization assistant. The user dictates voice notes that are transcribed by speech recognition.
-The transcript may contain errors, misheard words, or missing punctuation — use context to correct them before organizing.
+  return `You are an intelligent personal assistant that organizes spoken notes into actionable lists.
+The user speaks freely and your job is to interpret their INTENT, not just transcribe their words.
+The input comes from speech recognition and may contain errors — fix them using context.
 
-Analyze the text and organize it into categorized lists with tasks.
+## Your capabilities:
 
-Rules:
-- Fix speech recognition errors (homophones, missing words, wrong transcription) using context
-- Create thematic lists (Grocery, To-do, Ideas, Appointments, etc.)
-- Each item = one short, clear task
-- If items match existing lists, reuse them (isExisting: true, with the exact name)
+1. INGREDIENT/COMPONENT BREAKDOWN: When the user mentions a recipe, dish, cocktail, or project, break it down into individual components.
+   Example: "add groceries for mojitos" → individual items: limes, white rum, fresh mint, sugar, sparkling water
+   Example: "I need stuff for a caesar salad" → romaine lettuce, parmesan, croutons, caesar dressing, lemon
+   Example: "materials for painting the bedroom" → paint, roller, painter's tape, drop cloth
+
+2. CROSS-REFERENCING: A single spoken note can generate items in MULTIPLE lists.
+   Example: "remind me to change the lightbulb at the flat" →
+     - "Flat work" list: "Change the lightbulb"
+     - "Shopping" list: "Lightbulb"
+   Example: "I need to fix the leaky faucet" →
+     - "Home repairs" list: "Fix leaky faucet"
+     - "Shopping" list: "Faucet washer kit"
+   Think: what is the ACTION and what MATERIALS/PURCHASES does it require?
+
+3. SMART LIST NAMING: Create specific, contextual list names. Never use generic names like "Notes" or "Tasks" or "To-do".
+   - "Flat work" not "To-do"
+   - "Weekend BBQ" not "Food"
+   - "Monday meeting" not "Work"
+
+## Rules:
+- Fix speech recognition errors before organizing
+- Each task = one short, clear, actionable item
+- If items fit an existing list, REUSE it (isExisting: true, with the EXACT existing name)
 - Assign a relevant emoji to each new list
+- Include quantities when the user specifies them
 - ${langInstruction}
 - Respond ONLY in valid JSON, no markdown, no backticks
 
-Existing lists:
+## Existing lists:
 ${listsDescription}
 
-Expected response format:
-{"lists":[{"name":"Courses","icon":"🛒","isExisting":false,"tasks":["Lait","Oeufs"]}]}
+## JSON format:
+{"lists":[{"name":"Courses","icon":"🛒","isExisting":false,"tasks":["Citrons verts","Rhum blanc","Menthe fraîche"]}]}
 
-User text:
+## User's spoken text:
 "${userText}"`
 }
 
@@ -52,19 +84,37 @@ export async function organizeWithAI(
   userText: string,
   existingLists: TaskList[],
   lang: string,
+  existingTasks: Record<string, string[]> = {},
 ): Promise<AIResponse> {
   const apiKey = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY)
   if (!apiKey) {
     throw new Error('NO_API_KEY')
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+  const prompt = buildPrompt(userText, existingLists, lang, existingTasks)
 
-  const prompt = buildPrompt(userText, existingLists, lang)
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+      }),
+    },
+  )
 
-  const result = await model.generateContent(prompt)
-  const text = result.response.text()
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}))
+    console.error('Gemini API error:', res.status, errBody)
+    throw new Error(`API_ERROR_${res.status}`)
+  }
+
+  const data = await res.json()
+  // gemini-2.5-flash may return thinking + text parts, grab the last text part
+  const parts = data.candidates?.[0]?.content?.parts ?? []
+  const textPart = parts.filter((p: { text?: string }) => p.text !== undefined).pop()
+  const text = textPart?.text ?? ''
 
   // Clean potential markdown wrapping
   const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()

@@ -17,7 +17,9 @@
     "processing": "Organizing...",
     "noSpeech": "No speech detected",
     "notSupported": "Speech recognition is not supported by your browser. Use Chrome or Edge.",
-    "textPlaceholder": "Or type your text here..."
+    "textPlaceholder": "Or type your text here...",
+    "releaseToStop": "Release to stop",
+    "editBeforeSending": "Edit if needed, then confirm"
   },
   "ai": {
     "confirmTitle": "Here's what I understood",

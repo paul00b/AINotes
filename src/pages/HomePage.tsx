@@ -6,11 +6,14 @@ import { ListCard } from '../components/ListCard'
 import { EmptyState } from '../components/EmptyState'
 import { VoiceButton } from '../components/VoiceButton'
 import { VoiceModal } from '../components/VoiceModal'
+import { HoldOverlay } from '../components/HoldOverlay'
 import { AIResultView } from '../components/AIResultView'
 import { useLists } from '../hooks/useLists'
 import { useTasks } from '../hooks/useTasks'
 import { useAI } from '../hooks/useAI'
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { getColorForIndex } from '../lib/constants'
+import { db } from '../lib/db'
 import type { AIResponse } from '../lib/ai'
 
 export function HomePage() {
@@ -18,23 +21,65 @@ export function HomePage() {
   const { lists, addList, findListByName } = useLists()
   const { addTask } = useTasks()
   const { isProcessing, result, error, process, reset } = useAI()
+  const speech = useSpeechRecognition()
 
   const [showVoiceModal, setShowVoiceModal] = useState(false)
+  const [showHoldOverlay, setShowHoldOverlay] = useState(false)
+  const [isHolding, setIsHolding] = useState(false)
   const [showResult, setShowResult] = useState(false)
   const [pendingText, setPendingText] = useState('')
 
-  const handleVoiceSubmit = useCallback(async (text: string) => {
+  const lang = i18n.language.startsWith('fr') ? 'fr-FR' : 'en-US'
+
+  const getExistingTasks = useCallback(async () => {
+    const existingTasks: Record<string, string[]> = {}
+    for (const list of lists) {
+      const tasks = await db.tasks.where('listId').equals(list.id).toArray()
+      existingTasks[list.id] = tasks.map((t) => t.text)
+    }
+    return existingTasks
+  }, [lists])
+
+  const submitToAI = useCallback(async (text: string) => {
     setPendingText(text)
     setShowVoiceModal(false)
+    setShowHoldOverlay(false)
     setShowResult(true)
-    await process(text, lists, i18n.language)
-  }, [lists, i18n.language, process])
+    const existingTasks = await getExistingTasks()
+    await process(text, lists, i18n.language, existingTasks)
+  }, [lists, i18n.language, process, getExistingTasks])
+
+  // Hold handlers
+  const handleHoldStart = useCallback(() => {
+    setShowHoldOverlay(true)
+    setIsHolding(true)
+    speech.start(lang)
+  }, [speech, lang])
+
+  const handleHoldEnd = useCallback(() => {
+    setIsHolding(false)
+    speech.stop()
+  }, [speech])
+
+  const handleHoldCancel = useCallback(() => {
+    speech.reset()
+    setShowHoldOverlay(false)
+  }, [speech])
+
+  const handleHoldSubmit = useCallback((text: string) => {
+    speech.reset()
+    submitToAI(text)
+  }, [speech, submitToAI])
+
+  // Tap handler — opens the full modal
+  const handleTap = useCallback(() => {
+    setShowVoiceModal(true)
+  }, [])
 
   const handleConfirm = useCallback(async (aiResult: AIResponse) => {
     for (const aiList of aiResult.lists) {
       let listId: string
 
-      // Check if the list already exists
       const existing = await findListByName(aiList.name)
       if (existing) {
         listId = existing.id
@@ -43,7 +88,6 @@ export function HomePage() {
         listId = await addList(aiList.name, aiList.icon, getColorForIndex(colorIndex).key)
       }
 
-      // Add all tasks
       for (const taskText of aiList.tasks) {
         await addTask(taskText, listId)
       }
@@ -60,9 +104,10 @@ export function HomePage() {
 
   const handleRetry = useCallback(async () => {
     if (pendingText) {
-      await process(pendingText, lists, i18n.language)
+      const existingTasks = await getExistingTasks()
+      await process(pendingText, lists, i18n.language, existingTasks)
     }
-  }, [pendingText, lists, i18n.language, process])
+  }, [pendingText, lists, i18n.language, process, getExistingTasks])
 
   return (
     <Layout>
@@ -92,13 +137,29 @@ export function HomePage() {
       )}
 
       {/* Voice FAB */}
-      <VoiceButton onClick={() => setShowVoiceModal(true)} />
+      <VoiceButton
+        onTap={handleTap}
+        onHoldStart={handleHoldStart}
+        onHoldEnd={handleHoldEnd}
+        isListening={speech.isListening}
+      />
 
-      {/* Voice Modal */}
+      {/* Hold overlay — recording + edit */}
+      {showHoldOverlay && (
+        <HoldOverlay
+          isRecording={isHolding}
+          transcript={speech.transcript}
+          onRelease={handleHoldEnd}
+          onSubmit={handleHoldSubmit}
+          onCancel={handleHoldCancel}
+        />
+      )}
+
+      {/* Tap modal — write or speak */}
       <VoiceModal
         isOpen={showVoiceModal}
         onClose={() => setShowVoiceModal(false)}
-        onSubmit={handleVoiceSubmit}
+        onSubmit={submitToAI}
       />
 
       {/* AI Result */}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AIResponse, AIListResult } from '../lib/ai'
 
@@ -14,6 +14,12 @@ interface AIResultViewProps {
 export function AIResultView({ result, isProcessing, error, onConfirm, onCancel, onRetry }: AIResultViewProps) {
   const { t } = useTranslation()
   const [editedResult, setEditedResult] = useState<AIResponse>(result)
+
+  useEffect(() => {
+    if (result.lists.length > 0) {
+      setEditedResult(result)
+    }
+  }, [result])
 
   function removeTask(listIndex: number, taskIndex: number) {
     setEditedResult((prev) => {
