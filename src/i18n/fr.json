@@ -19,7 +19,9 @@
     "notSupported": "La reconnaissance vocale n'est pas supportée par votre navigateur. Utilisez Chrome ou Edge.",
     "textPlaceholder": "Ou tapez votre texte ici...",
     "releaseToStop": "Relâchez pour arrêter",
-    "editBeforeSending": "Modifiez si besoin, puis confirmez"
+    "editBeforeSending": "Modifiez si besoin, puis confirmez",
+    "transcribing": "Transcription en cours...",
+    "recording": "Enregistrement en cours..."
   },
   "ai": {
     "confirmTitle": "Voici ce que j'ai compris",

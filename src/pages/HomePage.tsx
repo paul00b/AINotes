@@ -5,31 +5,29 @@ import { Layout } from '../components/Layout'
 import { ListCard } from '../components/ListCard'
 import { EmptyState } from '../components/EmptyState'
 import { VoiceButton } from '../components/VoiceButton'
-import { VoiceModal } from '../components/VoiceModal'
-import { HoldOverlay } from '../components/HoldOverlay'
+import { TranscriptionLoader } from '../components/TranscriptionLoader'
 import { AIResultView } from '../components/AIResultView'
 import { useLists } from '../hooks/useLists'
 import { useTasks } from '../hooks/useTasks'
 import { useAI } from '../hooks/useAI'
-import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
+import { useAudioRecorder } from '../hooks/useAudioRecorder'
+import { transcribeWithGemini } from '../lib/ai'
 import { getColorForIndex } from '../lib/constants'
 import { db } from '../lib/db'
 import type { AIResponse } from '../lib/ai'
+
+type LoaderPhase = 'transcribing' | 'organizing'
 
 export function HomePage() {
   const { t, i18n } = useTranslation()
   const { lists, addList, findListByName } = useLists()
   const { addTask } = useTasks()
   const { isProcessing, result, error, process, reset } = useAI()
-  const speech = useSpeechRecognition()
+  const recorder = useAudioRecorder()
 
-  const [showVoiceModal, setShowVoiceModal] = useState(false)
-  const [showHoldOverlay, setShowHoldOverlay] = useState(false)
-  const [isHolding, setIsHolding] = useState(false)
+  const [loaderPhase, setLoaderPhase] = useState<LoaderPhase | null>(null)
   const [showResult, setShowResult] = useState(false)
   const [pendingText, setPendingText] = useState('')
-
-  const lang = i18n.language.startsWith('fr') ? 'fr-FR' : 'en-US'
 
   const getExistingTasks = useCallback(async () => {
     const existingTasks: Record<string, string[]> = {}
@@ -40,41 +38,43 @@ export function HomePage() {
     return existingTasks
   }, [lists])
 
-  const submitToAI = useCallback(async (text: string) => {
-    setPendingText(text)
-    setShowVoiceModal(false)
-    setShowHoldOverlay(false)
-    setShowResult(true)
-    const existingTasks = await getExistingTasks()
-    await process(text, lists, i18n.language, existingTasks)
-  }, [lists, i18n.language, process, getExistingTasks])
+  const handleTap = useCallback(async () => {
+    if (recorder.isRecording) {
+      // Stop recording → process
+      const blob = await recorder.stop()
+      if (!blob) return
 
-  // Hold handlers
-  const handleHoldStart = useCallback(() => {
-    setShowHoldOverlay(true)
-    setIsHolding(true)
-    speech.start(lang)
-  }, [speech, lang])
+      try {
+        // Phase 1: Transcription
+        setLoaderPhase('transcribing')
+        const transcript = await transcribeWithGemini(blob, i18n.language)
 
-  const handleHoldEnd = useCallback(() => {
-    setIsHolding(false)
-    speech.stop()
-  }, [speech])
+        if (!transcript) {
+          setLoaderPhase(null)
+          return
+        }
 
-  const handleHoldCancel = useCallback(() => {
-    speech.reset()
-    setShowHoldOverlay(false)
-  }, [speech])
-
-  const handleHoldSubmit = useCallback((text: string) => {
-    speech.reset()
-    submitToAI(text)
-  }, [speech, submitToAI])
-
-  // Tap handler — opens the full modal
-  const handleTap = useCallback(() => {
-    setShowVoiceModal(true)
-  }, [])
+        // Phase 2: AI organization
+        setPendingText(transcript)
+        setLoaderPhase('organizing')
+        setShowResult(true)
+        const existingTasks = await getExistingTasks()
+        await process(transcript, lists, i18n.language, existingTasks)
+        setLoaderPhase(null)
+      } catch (err) {
+        console.error('Processing error:', err)
+        setLoaderPhase(null)
+        setShowResult(true)
+      }
+    } else {
+      // Start recording
+      try {
+        await recorder.start()
+      } catch (err) {
+        console.error('Microphone access denied:', err)
+      }
+    }
+  }, [recorder, i18n.language, lists, process, getExistingTasks])
 
   const handleConfirm = useCallback(async (aiResult: AIResponse) => {
     for (const aiList of aiResult.lists) {
@@ -99,13 +99,16 @@ export function HomePage() {
 
   const handleCancel = useCallback(() => {
     setShowResult(false)
+    setLoaderPhase(null)
     reset()
   }, [reset])
 
   const handleRetry = useCallback(async () => {
     if (pendingText) {
+      setLoaderPhase('organizing')
       const existingTasks = await getExistingTasks()
       await process(pendingText, lists, i18n.language, existingTasks)
+      setLoaderPhase(null)
     }
   }, [pendingText, lists, i18n.language, process, getExistingTasks])
 
@@ -137,33 +140,20 @@ export function HomePage() {
       )}
 
       {/* Voice FAB */}
-      <VoiceButton
-        onTap={handleTap}
-        onHoldStart={handleHoldStart}
-        onHoldEnd={handleHoldEnd}
-        isListening={speech.isListening}
-      />
-
-      {/* Hold overlay — recording + edit */}
-      {showHoldOverlay && (
-        <HoldOverlay
-          isRecording={isHolding}
-          transcript={speech.transcript}
-          onRelease={handleHoldEnd}
-          onSubmit={handleHoldSubmit}
-          onCancel={handleHoldCancel}
+      {!loaderPhase && !showResult && (
+        <VoiceButton
+          onTap={handleTap}
+          isRecording={recorder.isRecording}
         />
       )}
 
-      {/* Tap modal — write or speak */}
-      <VoiceModal
-        isOpen={showVoiceModal}
-        onClose={() => setShowVoiceModal(false)}
-        onSubmit={submitToAI}
-      />
+      {/* Transcription / Organization loader */}
+      {loaderPhase && (
+        <TranscriptionLoader phase={loaderPhase} />
+      )}
 
-      {/* AI Result */}
-      {showResult && (
+      {/* AI Result — shown once loader is done */}
+      {showResult && !loaderPhase && (
         <AIResultView
           result={result ?? { lists: [] }}
           isProcessing={isProcessing}

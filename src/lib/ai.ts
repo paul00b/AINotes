@@ -100,6 +100,48 @@ ${listsDescription}
 "${userText}"`
 }
 
+export async function transcribeWithGemini(audioBlob: Blob, lang: string): Promise<string> {
+  const apiKey = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY)
+  if (!apiKey) throw new Error('NO_API_KEY')
+
+  const buffer = await audioBlob.arrayBuffer()
+  const base64 = btoa(
+    new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), ''),
+  )
+
+  const isFr = lang.startsWith('fr')
+  const transcribePrompt = isFr
+    ? 'Transcris cet audio mot pour mot. Retourne uniquement le texte transcrit, sans commentaire.'
+    : 'Transcribe this audio word for word. Return only the transcribed text, no commentary.'
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { inlineData: { mimeType: audioBlob.type || 'audio/webm', data: base64 } },
+            { text: transcribePrompt },
+          ],
+        }],
+      }),
+    },
+  )
+
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}))
+    console.error('Gemini transcription error:', res.status, errBody)
+    throw new Error(`API_ERROR_${res.status}`)
+  }
+
+  const data = await res.json()
+  const parts = data.candidates?.[0]?.content?.parts ?? []
+  const textPart = parts.filter((p: { text?: string }) => p.text !== undefined).pop()
+  return (textPart?.text ?? '').trim()
+}
+
 export async function organizeWithAI(
   userText: string,
   existingLists: TaskList[],
