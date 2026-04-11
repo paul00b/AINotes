@@ -15,32 +15,36 @@ export interface AIResponse {
 }
 
 function buildPrompt(userText: string, existingLists: TaskList[], lang: string): string {
+  const isFr = lang.startsWith('fr')
   const listsDescription = existingLists.length > 0
     ? existingLists.map((l) => `- "${l.name}" (${l.icon})`).join('\n')
-    : 'Aucune'
+    : isFr ? 'Aucune' : 'None'
 
-  const langInstruction = lang === 'fr'
+  const langInstruction = isFr
     ? 'Réponds en français.'
     : 'Respond in English.'
 
-  return `Tu es un assistant d'organisation. L'utilisateur te dicte des notes vocales.
-Analyse le texte et organise-le en listes catégorisées avec des tâches.
+  return `You are an organization assistant. The user dictates voice notes that are transcribed by speech recognition.
+The transcript may contain errors, misheard words, or missing punctuation — use context to correct them before organizing.
 
-Règles:
-- Crée des listes thématiques (Courses, À faire, Idées, Rendez-vous, etc.)
-- Chaque élément = une tâche courte et claire
-- Si des éléments correspondent à des listes existantes, réutilise-les (isExisting: true, avec le nom exact)
-- Attribue un emoji pertinent à chaque nouvelle liste
+Analyze the text and organize it into categorized lists with tasks.
+
+Rules:
+- Fix speech recognition errors (homophones, missing words, wrong transcription) using context
+- Create thematic lists (Grocery, To-do, Ideas, Appointments, etc.)
+- Each item = one short, clear task
+- If items match existing lists, reuse them (isExisting: true, with the exact name)
+- Assign a relevant emoji to each new list
 - ${langInstruction}
-- Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks
+- Respond ONLY in valid JSON, no markdown, no backticks
 
-Listes existantes:
+Existing lists:
 ${listsDescription}
 
-Format de réponse attendu:
+Expected response format:
 {"lists":[{"name":"Courses","icon":"🛒","isExisting":false,"tasks":["Lait","Oeufs"]}]}
 
-Texte de l'utilisateur:
+User text:
 "${userText}"`
 }
 
@@ -98,14 +102,15 @@ export function organizeOffline(userText: string, lang: string): AIResponse {
     }
   }
 
+  const isFr = lang.startsWith('fr')
   if (grocery.length > 0) {
-    lists.push({ name: lang === 'fr' ? 'Courses' : 'Grocery', icon: '🛒', isExisting: false, tasks: grocery })
+    lists.push({ name: isFr ? 'Courses' : 'Grocery', icon: '🛒', isExisting: false, tasks: grocery })
   }
   if (appointments.length > 0) {
-    lists.push({ name: lang === 'fr' ? 'Rendez-vous' : 'Appointments', icon: '📅', isExisting: false, tasks: appointments })
+    lists.push({ name: isFr ? 'Rendez-vous' : 'Appointments', icon: '📅', isExisting: false, tasks: appointments })
   }
   if (general.length > 0) {
-    lists.push({ name: lang === 'fr' ? 'Notes' : 'Notes', icon: '📝', isExisting: false, tasks: general })
+    lists.push({ name: isFr ? 'Notes' : 'Notes', icon: '📝', isExisting: false, tasks: general })
   }
 
   // If nothing was categorized, put everything in Notes

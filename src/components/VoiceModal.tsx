@@ -13,7 +13,7 @@ export function VoiceModal({ isOpen, onClose, onSubmit }: VoiceModalProps) {
   const { isListening, transcript, isSupported, start, stop, reset } = useSpeechRecognition()
   const [manualText, setManualText] = useState('')
 
-  const lang = i18n.language === 'fr' ? 'fr-FR' : 'en-US'
+  const lang = i18n.language.startsWith('fr') ? 'fr-FR' : 'en-US'
 
   function handleMicClick() {
     if (isListening) {
