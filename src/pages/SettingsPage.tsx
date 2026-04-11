@@ -132,6 +132,10 @@ export function SettingsPage() {
               {t('settings.deleteData')}
             </button>
           </div>
+          {/* Version */}
+          <div className="text-center pt-4">
+            <p className="text-xs text-gray-300">AiNotes v1.0</p>
+          </div>
         </div>
       </div>
 
