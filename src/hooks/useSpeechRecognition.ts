@@ -79,23 +79,22 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       if (sessionIdRef.current !== currentSession) return
 
+      // Rebuild full transcript from all results to avoid duplication
+      // on Samsung Internet and other browsers with quirky resultIndex
+      let finalTranscript = ''
       let interimTranscript = ''
-      let finalPart = ''
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i]
         if (result.isFinal) {
-          finalPart += result[0].transcript
+          finalTranscript += result[0].transcript
         } else {
           interimTranscript += result[0].transcript
         }
       }
 
-      if (finalPart) {
-        finalTranscriptRef.current += finalPart
-      }
-
-      setTranscript(finalTranscriptRef.current + interimTranscript)
+      finalTranscriptRef.current = finalTranscript
+      setTranscript(finalTranscript + interimTranscript)
       // Successful result — reset retry counter
       retryCountRef.current = 0
     }
