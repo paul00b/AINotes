@@ -27,14 +27,14 @@ export function useAI() {
       setResult(response)
       return response
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      setError(message)
       // Try offline fallback on API error
       try {
         const fallback = organizeOffline(text, lang)
         setResult(fallback)
         return fallback
       } catch {
+        const message = err instanceof Error ? err.message : 'Unknown error'
+        setError(message)
         return null
       }
     } finally {

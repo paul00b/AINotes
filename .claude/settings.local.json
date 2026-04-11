@@ -12,7 +12,10 @@
       "Bash(npm run:*)",
       "Bash(curl -s http://localhost:5173)",
       "Bash(kill %1)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)"
     ]
   },
   "remote": {
