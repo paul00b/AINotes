@@ -17,6 +17,7 @@ export default defineConfig({
         theme_color: '#10b981',
         background_color: '#fafafa',
         display: 'standalone',
+        display_override: ['standalone', 'minimal-ui'],
         scope: '/',
         start_url: '/',
         icons: [
