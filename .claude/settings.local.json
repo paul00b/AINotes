@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npm view:*)",
+      "Bash(npm create:*)",
+      "Bash(cp -r /c/Users/brous/Desktop/Dev/AiNotesApp/* /c/Users/brous/Desktop/Dev/AiNotes/)",
+      "Bash(cp /c/Users/brous/Desktop/Dev/AiNotesApp/.gitignore /c/Users/brous/Desktop/Dev/AiNotes/)",
+      "Bash(rm -rf /c/Users/brous/Desktop/Dev/AiNotesApp)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(kill %1)"
+    ]
+  },
+  "remote": {
+    "defaultEnvironmentId": "env_01C4eZrYw7zy8TB5cnta8JQf"
+  }
+}

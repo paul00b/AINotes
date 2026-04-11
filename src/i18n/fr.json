@@ -1,0 +1,65 @@
+{
+  "app": {
+    "title": "AiNotes"
+  },
+  "home": {
+    "myLists": "Mes listes",
+    "emptyTitle": "Aucune note pour l'instant",
+    "emptyDescription": "Appuyez sur le micro pour dicter vos premières notes",
+    "tasks": "{{count}} tâche",
+    "tasks_other": "{{count}} tâches",
+    "completed": "{{done}}/{{total}}"
+  },
+  "voice": {
+    "listening": "Je vous écoute...",
+    "tapToStop": "Appuyez pour arrêter",
+    "tapToStart": "Appuyez pour parler",
+    "processing": "Organisation en cours...",
+    "noSpeech": "Aucune parole détectée",
+    "notSupported": "La reconnaissance vocale n'est pas supportée par votre navigateur. Utilisez Chrome ou Edge.",
+    "textPlaceholder": "Ou tapez votre texte ici..."
+  },
+  "ai": {
+    "confirmTitle": "Voici ce que j'ai compris",
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "retry": "Réessayer",
+    "newList": "Nouvelle liste",
+    "existingList": "Liste existante",
+    "error": "Erreur lors de l'analyse. Vérifiez votre clé API.",
+    "organizing": "Organisation en cours..."
+  },
+  "list": {
+    "empty": "Aucune tâche dans cette liste",
+    "delete": "Supprimer",
+    "deleteList": "Supprimer la liste",
+    "deleteListConfirm": "Supprimer \"{{name}}\" et toutes ses tâches ?",
+    "addTask": "Ajouter une tâche...",
+    "rename": "Renommer"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "apiKey": "Clé API Gemini",
+    "apiKeyDescription": "Obtenez une clé gratuite sur Google AI Studio",
+    "apiKeyPlaceholder": "AIza...",
+    "language": "Langue",
+    "save": "Enregistrer",
+    "saved": "Enregistré !",
+    "exportData": "Exporter mes données",
+    "deleteData": "Supprimer toutes les données",
+    "deleteDataConfirm": "Êtes-vous sûr ? Cette action est irréversible."
+  },
+  "setup": {
+    "welcome": "Bienvenue sur AiNotes",
+    "description": "Dictez vos notes, l'IA les organise pour vous.",
+    "apiKeyNeeded": "Pour commencer, entrez votre clé API Gemini gratuite.",
+    "getKey": "Obtenir une clé gratuite",
+    "start": "Commencer"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "delete": "Supprimer",
+    "back": "Retour"
+  }
+}

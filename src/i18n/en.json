@@ -1,0 +1,65 @@
+{
+  "app": {
+    "title": "AiNotes"
+  },
+  "home": {
+    "myLists": "My Lists",
+    "emptyTitle": "No notes yet",
+    "emptyDescription": "Tap the mic to dictate your first notes",
+    "tasks": "{{count}} task",
+    "tasks_other": "{{count}} tasks",
+    "completed": "{{done}}/{{total}}"
+  },
+  "voice": {
+    "listening": "Listening...",
+    "tapToStop": "Tap to stop",
+    "tapToStart": "Tap to speak",
+    "processing": "Organizing...",
+    "noSpeech": "No speech detected",
+    "notSupported": "Speech recognition is not supported by your browser. Use Chrome or Edge.",
+    "textPlaceholder": "Or type your text here..."
+  },
+  "ai": {
+    "confirmTitle": "Here's what I understood",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "newList": "New list",
+    "existingList": "Existing list",
+    "error": "Analysis error. Check your API key.",
+    "organizing": "Organizing..."
+  },
+  "list": {
+    "empty": "No tasks in this list",
+    "delete": "Delete",
+    "deleteList": "Delete list",
+    "deleteListConfirm": "Delete \"{{name}}\" and all its tasks?",
+    "addTask": "Add a task...",
+    "rename": "Rename"
+  },
+  "settings": {
+    "title": "Settings",
+    "apiKey": "Gemini API Key",
+    "apiKeyDescription": "Get a free key from Google AI Studio",
+    "apiKeyPlaceholder": "AIza...",
+    "language": "Language",
+    "save": "Save",
+    "saved": "Saved!",
+    "exportData": "Export my data",
+    "deleteData": "Delete all data",
+    "deleteDataConfirm": "Are you sure? This action cannot be undone."
+  },
+  "setup": {
+    "welcome": "Welcome to AiNotes",
+    "description": "Dictate your notes, AI organizes them for you.",
+    "apiKeyNeeded": "To get started, enter your free Gemini API key.",
+    "getKey": "Get a free key",
+    "start": "Get Started"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "back": "Back"
+  }
+}
