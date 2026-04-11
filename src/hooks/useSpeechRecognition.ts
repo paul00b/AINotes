@@ -71,31 +71,39 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
   const startInternal = useCallback((lang: string, currentSession: number) => {
     if (!SpeechRecognitionAPI) return
 
+    // Always create a fresh instance to avoid stale results on restart
+    if (recognitionRef.current) {
+      recognitionRef.current.onresult = null
+      recognitionRef.current.onerror = null
+      recognitionRef.current.onend = null
+      try { recognitionRef.current.abort() } catch { /* already stopped */ }
+    }
+
     const recognition = new SpeechRecognitionAPI()
-    recognition.continuous = true
+    recognition.continuous = false
     recognition.interimResults = true
     recognition.lang = lang
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       if (sessionIdRef.current !== currentSession) return
 
-      // Rebuild full transcript from all results to avoid duplication
-      // on Samsung Internet and other browsers with quirky resultIndex
-      let finalTranscript = ''
-      let interimTranscript = ''
+      let currentFinal = ''
+      let currentInterim = ''
 
       for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i]
         if (result.isFinal) {
-          finalTranscript += result[0].transcript
+          currentFinal += result[0].transcript
         } else {
-          interimTranscript += result[0].transcript
+          currentInterim += result[0].transcript
         }
       }
 
-      finalTranscriptRef.current = finalTranscript
-      setTranscript(finalTranscript + interimTranscript)
-      // Successful result — reset retry counter
+      if (currentFinal) {
+        finalTranscriptRef.current += currentFinal
+      }
+
+      setTranscript(finalTranscriptRef.current + currentInterim)
       retryCountRef.current = 0
     }
 
@@ -103,10 +111,8 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
       if (sessionIdRef.current !== currentSession) return
       console.warn('Speech recognition error:', event.error)
 
-      // On network/service errors, auto-retry up to 3 times
       if ((event.error === 'network' || event.error === 'service-not-allowed') && retryCountRef.current < 3) {
         retryCountRef.current++
-        console.log(`Retrying speech recognition (${retryCountRef.current}/3)...`)
         return // let onend handle the restart
       }
 
@@ -119,14 +125,10 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
     recognition.onend = () => {
       if (sessionIdRef.current !== currentSession) return
 
-      // Auto-restart if we should still be listening (network hiccup, Chrome timeout, etc.)
+      // Auto-restart with a fresh instance if we should still be listening
       if (shouldBeListeningRef.current && retryCountRef.current <= 3) {
-        try {
-          recognition.start()
-          return
-        } catch {
-          // Can't restart — fall through to stop
-        }
+        startInternal(lang, currentSession)
+        return
       }
 
       shouldBeListeningRef.current = false
@@ -149,7 +151,6 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
   const start = useCallback((lang = 'fr-FR') => {
     if (!SpeechRecognitionAPI) return
 
-    // Kill any existing session cleanly
     if (recognitionRef.current) {
       recognitionRef.current.onresult = null
       recognitionRef.current.onerror = null
