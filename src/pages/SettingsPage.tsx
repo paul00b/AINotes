@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { Layout } from '../components/Layout'
 import { STORAGE_KEYS } from '../lib/constants'
 import { db } from '../lib/db'
+import { useAuthContext } from '../contexts/AuthContext'
 
 export function SettingsPage() {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
+  const { user, signOut } = useAuthContext()
 
   const [apiKey, setApiKey] = useState(localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY) ?? '')
   const [saved, setSaved] = useState(false)
@@ -66,6 +68,37 @@ export function SettingsPage() {
         <h1 className="text-2xl font-bold text-gray-800 mb-8">{t('settings.title')}</h1>
 
         <div className="space-y-6">
+          {/* Account */}
+          <div className="glass rounded-2xl p-5 space-y-3">
+            <label className="text-sm font-medium text-gray-700">{t('auth.account')}</label>
+            {user ? (
+              <>
+                <p className="text-sm text-gray-500">{user.email}</p>
+                <button
+                  onClick={async () => {
+                    await signOut()
+                    localStorage.removeItem('ainotes_skipped_auth')
+                    navigate('/')
+                    window.location.reload()
+                  }}
+                  className="w-full py-2.5 rounded-xl text-sm font-medium text-red-500 bg-red-50 hover:bg-red-100 transition-colors"
+                >
+                  {t('auth.logout')}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  localStorage.removeItem('ainotes_skipped_auth')
+                  window.location.reload()
+                }}
+                className="w-full py-2.5 rounded-xl text-sm font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+              >
+                {t('auth.loginToSync')}
+              </button>
+            )}
+          </div>
+
           {/* API Key */}
           <div className="glass rounded-2xl p-5 space-y-3">
             <label className="text-sm font-medium text-gray-700">{t('settings.apiKey')}</label>

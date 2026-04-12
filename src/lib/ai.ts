@@ -115,13 +115,15 @@ export async function transcribeWithGemini(audioBlob: Blob, lang: string): Promi
   }
   const base64Audio = btoa(binary)
 
+  console.log('Transcription debug:', { mimeType, blobSize: audioBlob.size, base64Length: base64Audio.length })
+
   const isFr = lang.startsWith('fr')
   const transcribePrompt = isFr
     ? 'Transcris cet audio mot pour mot. Retourne uniquement le texte transcrit, sans commentaire.'
     : 'Transcribe this audio word for word. Return only the transcribed text, no commentary.'
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
