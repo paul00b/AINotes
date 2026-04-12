@@ -104,10 +104,16 @@ export async function transcribeWithGemini(audioBlob: Blob, lang: string): Promi
   const apiKey = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY)
   if (!apiKey) throw new Error('NO_API_KEY')
 
-  const buffer = await audioBlob.arrayBuffer()
-  const base64 = btoa(
-    new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), ''),
-  )
+  const mimeType = audioBlob.type || 'audio/webm'
+
+  // Convert audio to base64 for inline upload
+  const arrayBuffer = await audioBlob.arrayBuffer()
+  const bytes = new Uint8Array(arrayBuffer)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  const base64Audio = btoa(binary)
 
   const isFr = lang.startsWith('fr')
   const transcribePrompt = isFr
@@ -122,7 +128,7 @@ export async function transcribeWithGemini(audioBlob: Blob, lang: string): Promi
       body: JSON.stringify({
         contents: [{
           parts: [
-            { inlineData: { mimeType: audioBlob.type || 'audio/webm', data: base64 } },
+            { inlineData: { mimeType, data: base64Audio } },
             { text: transcribePrompt },
           ],
         }],
