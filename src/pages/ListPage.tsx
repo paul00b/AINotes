@@ -1,19 +1,20 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Layout } from '../components/Layout'
 import { TaskItem } from '../components/TaskItem'
-import { db } from '../lib/db'
+import { db, type Task } from '../lib/db'
 import { useTasks } from '../hooks/useTasks'
 import { useLists } from '../hooks/useLists'
+import { useDragSort } from '../hooks/useDragSort'
 import { getColorByKey } from '../lib/constants'
 
 export function ListPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const { tasks, toggleTask, deleteTask, updateTask, addTask } = useTasks(id)
+  const { tasks, toggleTask, deleteTask, updateTask, addTask, reorderTasks } = useTasks(id)
   const { deleteList, updateList } = useLists()
   const [newTaskText, setNewTaskText] = useState('')
   const [isRenaming, setIsRenaming] = useState(false)
@@ -21,6 +22,20 @@ export function ListPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const list = useLiveQuery(() => (id ? db.lists.get(id) : undefined), [id])
+
+  const uncompletedTasks = tasks.filter((t) => !t.completed)
+  const completedTasks = tasks.filter((t) => t.completed)
+
+  const handleReorderUncompleted = useCallback((newOrder: Task[]) => {
+    const combined = [...newOrder.map((t) => t.id), ...completedTasks.map((t) => t.id)]
+    reorderTasks(combined)
+  }, [reorderTasks, completedTasks])
+
+  const { containerRef, getItemStyle, bindHandle, draggingId } = useDragSort<Task>(
+    uncompletedTasks,
+    handleReorderUncompleted,
+    'vertical',
+  )
 
   if (!list) {
     return (
@@ -54,9 +69,6 @@ export function ListPage() {
     await deleteList(list!.id)
     navigate('/')
   }
-
-  const uncompletedTasks = tasks.filter((t) => !t.completed)
-  const completedTasks = tasks.filter((t) => t.completed)
 
   return (
     <Layout>
@@ -125,36 +137,43 @@ export function ListPage() {
       </div>
 
       {/* Tasks */}
-      <div className="px-6 space-y-2">
-        {uncompletedTasks.map((task) => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            accentColor={color.accent}
-            onToggle={toggleTask}
-            onDelete={deleteTask}
-            onUpdate={(taskId, text) => updateTask(taskId, { text })}
-          />
-        ))}
+      <div className="px-6">
+        <div ref={containerRef} className="flex flex-col gap-2">
+          {uncompletedTasks.map((task) => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              accentColor={color.accent}
+              onToggle={toggleTask}
+              onDelete={deleteTask}
+              onUpdate={(taskId, text) => updateTask(taskId, { text })}
+              isDragging={draggingId === task.id}
+              style={getItemStyle(task.id)}
+              dragHandleProps={bindHandle(task.id)}
+            />
+          ))}
+        </div>
 
         {completedTasks.length > 0 && uncompletedTasks.length > 0 && (
           <div className="pt-4 pb-2">
             <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
-              Completed ({completedTasks.length})
+              {t('list.completed')} ({completedTasks.length})
             </span>
           </div>
         )}
 
-        {completedTasks.map((task) => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            accentColor={color.accent}
-            onToggle={toggleTask}
-            onDelete={deleteTask}
-            onUpdate={(taskId, text) => updateTask(taskId, { text })}
-          />
-        ))}
+        <div className="flex flex-col gap-2">
+          {completedTasks.map((task) => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              accentColor={color.accent}
+              onToggle={toggleTask}
+              onDelete={deleteTask}
+              onUpdate={(taskId, text) => updateTask(taskId, { text })}
+            />
+          ))}
+        </div>
 
         {tasks.length === 0 && (
           <p className="text-center text-gray-400 text-sm py-12">{t('list.empty')}</p>

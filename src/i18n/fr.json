@@ -8,7 +8,8 @@
     "emptyDescription": "Appuyez sur le micro pour dicter vos premières notes",
     "tasks": "{{count}} tâche",
     "tasks_other": "{{count}} tâches",
-    "completed": "{{done}}/{{total}}"
+    "completed": "{{done}}/{{total}}",
+    "toggleView": "Changer l'affichage"
   },
   "voice": {
     "listening": "Je vous écoute...",
@@ -39,7 +40,8 @@
     "deleteList": "Supprimer la liste",
     "deleteListConfirm": "Supprimer \"{{name}}\" et toutes ses tâches ?",
     "addTask": "Ajouter une tâche...",
-    "rename": "Renommer"
+    "rename": "Renommer",
+    "completed": "Terminées"
   },
   "settings": {
     "title": "Paramètres",

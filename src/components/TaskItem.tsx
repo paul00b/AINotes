@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { forwardRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import type { Task } from '../lib/db'
 
 interface TaskItemProps {
@@ -7,9 +7,18 @@ interface TaskItemProps {
   onToggle: (id: string) => void
   onDelete: (id: string) => void
   onUpdate: (id: string, text: string) => void
+  isDragging?: boolean
+  style?: CSSProperties
+  dragHandleProps?: {
+    onPointerDown: (e: ReactPointerEvent) => void
+    style: CSSProperties
+  }
 }
 
-export function TaskItem({ task, accentColor, onToggle, onDelete, onUpdate }: TaskItemProps) {
+export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(function TaskItem(
+  { task, accentColor, onToggle, onDelete, onUpdate, isDragging = false, style, dragHandleProps },
+  ref,
+) {
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(task.text)
   const [swiped, setSwiped] = useState(false)
@@ -25,12 +34,37 @@ export function TaskItem({ task, accentColor, onToggle, onDelete, onUpdate }: Ta
   }
 
   return (
-    <div className="group relative">
+    <div
+      ref={ref}
+      data-drag-id={task.id}
+      style={style}
+      className="group relative"
+    >
       <div
-        className={`glass rounded-xl px-4 py-3 flex items-center gap-3 transition-all duration-200 ${
+        className={`glass rounded-xl px-3 py-3 flex items-center gap-2 transition-all duration-200 ${
           swiped ? '-translate-x-20' : ''
-        }`}
+        } ${isDragging ? 'shadow-xl' : ''}`}
       >
+        {/* Drag handle */}
+        {dragHandleProps && (
+          <button
+            type="button"
+            aria-label="Reorder"
+            onPointerDown={dragHandleProps.onPointerDown}
+            style={dragHandleProps.style}
+            className="flex-shrink-0 text-gray-300 hover:text-gray-500 p-1 -ml-1"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <circle cx="9" cy="6" r="1.2" fill="currentColor" />
+              <circle cx="15" cy="6" r="1.2" fill="currentColor" />
+              <circle cx="9" cy="12" r="1.2" fill="currentColor" />
+              <circle cx="15" cy="12" r="1.2" fill="currentColor" />
+              <circle cx="9" cy="18" r="1.2" fill="currentColor" />
+              <circle cx="15" cy="18" r="1.2" fill="currentColor" />
+            </svg>
+          </button>
+        )}
+
         {/* Custom checkbox */}
         <button
           onClick={() => onToggle(task.id)}
@@ -75,7 +109,7 @@ export function TaskItem({ task, accentColor, onToggle, onDelete, onUpdate }: Ta
           className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-gray-500 p-1"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
@@ -93,4 +127,4 @@ export function TaskItem({ task, accentColor, onToggle, onDelete, onUpdate }: Ta
       )}
     </div>
   )
-}
+})

@@ -46,5 +46,19 @@ export function useLists() {
     return db.lists.where('name').equalsIgnoreCase(name).first()
   }
 
-  return { lists, addList, updateList, deleteList, findListByName }
+  async function reorderLists(orderedIds: string[]) {
+    const updates = orderedIds.map((id, index) => ({ id, order: index + 1 }))
+    await db.transaction('rw', db.lists, async () => {
+      for (const { id, order } of updates) {
+        await db.lists.update(id, { order })
+      }
+    })
+    if (user) {
+      for (const { id, order } of updates) {
+        syncUpdateList(user.id, id, { order })
+      }
+    }
+  }
+
+  return { lists, addList, updateList, deleteList, findListByName, reorderLists }
 }

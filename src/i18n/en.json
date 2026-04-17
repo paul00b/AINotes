@@ -8,7 +8,8 @@
     "emptyDescription": "Tap the mic to dictate your first notes",
     "tasks": "{{count}} task",
     "tasks_other": "{{count}} tasks",
-    "completed": "{{done}}/{{total}}"
+    "completed": "{{done}}/{{total}}",
+    "toggleView": "Toggle view"
   },
   "voice": {
     "listening": "Listening...",
@@ -39,7 +40,8 @@
     "deleteList": "Delete list",
     "deleteListConfirm": "Delete \"{{name}}\" and all its tasks?",
     "addTask": "Add a task...",
-    "rename": "Rename"
+    "rename": "Rename",
+    "completed": "Completed"
   },
   "settings": {
     "title": "Settings",

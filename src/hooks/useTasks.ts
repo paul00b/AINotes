@@ -59,5 +59,19 @@ export function useTasks(listId?: string) {
     return { total: all.length, done }
   }
 
-  return { tasks, addTask, toggleTask, updateTask, deleteTask, getTaskCountForList }
+  async function reorderTasks(orderedIds: string[]) {
+    const updates = orderedIds.map((id, index) => ({ id, order: index + 1 }))
+    await db.transaction('rw', db.tasks, async () => {
+      for (const { id, order } of updates) {
+        await db.tasks.update(id, { order })
+      }
+    })
+    if (user) {
+      for (const { id, order } of updates) {
+        syncUpdateTask(user.id, id, { order })
+      }
+    }
+  }
+
+  return { tasks, addTask, toggleTask, updateTask, deleteTask, getTaskCountForList, reorderTasks }
 }

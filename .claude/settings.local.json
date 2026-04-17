@@ -16,7 +16,9 @@
       "Bash(git add:*)",
       "Bash(git commit -m ':*)",
       "Bash(git push:*)",
-      "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models?key=test\")"
+      "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models?key=test\")",
+      "Bash(asdf local *)",
+      "Bash(asdf set *)"
     ]
   },
   "remote": {
