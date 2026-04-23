@@ -41,7 +41,8 @@
     "deleteListConfirm": "Supprimer \"{{name}}\" et toutes ses tâches ?",
     "addTask": "Ajouter une tâche...",
     "rename": "Renommer",
-    "completed": "Terminées"
+    "completed": "Terminées",
+    "moveTo": "Déplacer vers…"
   },
   "settings": {
     "title": "Paramètres",
@@ -92,5 +93,12 @@
     "confirm": "Confirmer",
     "delete": "Supprimer",
     "back": "Retour"
+  },
+  "category": {
+    "add": "Ajouter une catégorie",
+    "namePlaceholder": "Nom…",
+    "renamePrompt": "Nouveau nom de la catégorie",
+    "deleteConfirm": "Supprimer la catégorie \"{{name}}\" et toutes ses listes ?",
+    "cannotDeleteLast": "Impossible de supprimer la dernière catégorie."
   }
 }

@@ -8,6 +8,8 @@ import { VoiceButton } from '../components/VoiceButton'
 import { TranscriptionLoader } from '../components/TranscriptionLoader'
 import { AIResultView } from '../components/AIResultView'
 import { useLists } from '../hooks/useLists'
+import { useCategories } from '../hooks/useCategories'
+import { CategoryBar } from '../components/CategoryBar'
 import { useTasks } from '../hooks/useTasks'
 import { useAI } from '../hooks/useAI'
 import { useAudioRecorder } from '../hooks/useAudioRecorder'
@@ -29,7 +31,15 @@ function loadViewMode(): ListViewMode {
 
 export function HomePage() {
   const { t, i18n } = useTranslation()
-  const { lists, addList, findListByName, reorderLists } = useLists()
+  const {
+    categories,
+    activeCategoryId,
+    setActiveCategoryId,
+    addCategory,
+    renameCategory,
+    deleteCategory,
+  } = useCategories()
+  const { lists, addList, findListByName, reorderLists } = useLists(activeCategoryId)
   const { addTask } = useTasks()
   const { isProcessing, result, error, process, reset } = useAI()
   const recorder = useAudioRecorder()
@@ -169,6 +179,16 @@ export function HomePage() {
           </Link>
         </div>
       </div>
+
+      {/* Category switcher */}
+      <CategoryBar
+        categories={categories}
+        activeId={activeCategoryId}
+        onSelect={setActiveCategoryId}
+        onAdd={(name) => addCategory(name)}
+        onRename={renameCategory}
+        onDelete={deleteCategory}
+      />
 
       {/* Lists */}
       {lists.length > 0 ? (

@@ -7,6 +7,7 @@ import { TaskItem } from '../components/TaskItem'
 import { db, type Task } from '../lib/db'
 import { useTasks } from '../hooks/useTasks'
 import { useLists } from '../hooks/useLists'
+import { useCategories } from '../hooks/useCategories'
 import { useDragSort } from '../hooks/useDragSort'
 import { getColorByKey } from '../lib/constants'
 
@@ -16,10 +17,12 @@ export function ListPage() {
   const { t } = useTranslation()
   const { tasks, toggleTask, deleteTask, updateTask, addTask, reorderTasks } = useTasks(id)
   const { deleteList, updateList } = useLists()
+  const { categories, setActiveCategoryId } = useCategories()
   const [newTaskText, setNewTaskText] = useState('')
   const [isRenaming, setIsRenaming] = useState(false)
   const [renameText, setRenameText] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showMove, setShowMove] = useState(false)
 
   const list = useLiveQuery(() => (id ? db.lists.get(id) : undefined), [id])
 
@@ -70,6 +73,17 @@ export function ListPage() {
     navigate('/')
   }
 
+  async function handleMoveTo(categoryId: string) {
+    if (!list || categoryId === list.categoryId) {
+      setShowMove(false)
+      return
+    }
+    await updateList(list.id, { categoryId })
+    setShowMove(false)
+    setActiveCategoryId(categoryId)
+    navigate('/')
+  }
+
   return (
     <Layout>
       {/* Header */}
@@ -114,12 +128,22 @@ export function ListPage() {
             {completedCount}/{tasks.length} {t('home.tasks', { count: tasks.length }).split(' ').slice(1).join(' ')}
           </span>
 
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="text-xs text-gray-400 hover:text-red-400 transition-colors"
-          >
-            {t('list.deleteList')}
-          </button>
+          <div className="flex items-center gap-4">
+            {categories.length > 1 && (
+              <button
+                onClick={() => setShowMove(true)}
+                className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
+              >
+                {t('list.moveTo')}
+              </button>
+            )}
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="text-xs text-gray-400 hover:text-red-400 transition-colors"
+            >
+              {t('list.deleteList')}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -179,6 +203,49 @@ export function ListPage() {
           <p className="text-center text-gray-400 text-sm py-12">{t('list.empty')}</p>
         )}
       </div>
+
+      {/* Move to category */}
+      {showMove && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+          onClick={() => setShowMove(false)}
+        >
+          <div
+            className="glass rounded-2xl p-4 max-w-sm w-full space-y-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-xs uppercase tracking-wide text-gray-400 font-medium px-2 pb-2">
+              {t('list.moveTo')}
+            </p>
+            {categories.map((cat) => {
+              const isCurrent = cat.id === list.categoryId
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => handleMoveTo(cat.id)}
+                  disabled={isCurrent}
+                  className={`w-full px-3 py-3 rounded-xl text-left text-sm transition-colors flex items-center justify-between ${
+                    isCurrent
+                      ? 'text-gray-400 bg-gray-100/50'
+                      : 'text-gray-700 hover:bg-white/60'
+                  }`}
+                >
+                  <span>{cat.name}</span>
+                  {isCurrent && (
+                    <span className="text-xs text-gray-400">✓</span>
+                  )}
+                </button>
+              )
+            })}
+            <button
+              onClick={() => setShowMove(false)}
+              className="w-full mt-2 py-3 rounded-xl text-sm font-medium text-gray-500 bg-gray-100"
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirmation */}
       {showDeleteConfirm && (

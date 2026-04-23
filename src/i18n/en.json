@@ -41,7 +41,8 @@
     "deleteListConfirm": "Delete \"{{name}}\" and all its tasks?",
     "addTask": "Add a task...",
     "rename": "Rename",
-    "completed": "Completed"
+    "completed": "Completed",
+    "moveTo": "Move to…"
   },
   "settings": {
     "title": "Settings",
@@ -92,5 +93,12 @@
     "confirm": "Confirm",
     "delete": "Delete",
     "back": "Back"
+  },
+  "category": {
+    "add": "Add a category",
+    "namePlaceholder": "Name…",
+    "renamePrompt": "New category name",
+    "deleteConfirm": "Delete category \"{{name}}\" and all its lists?",
+    "cannotDeleteLast": "Cannot delete the last category."
   }
 }

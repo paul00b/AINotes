@@ -5,17 +5,27 @@ import { getColorForIndex } from '../lib/constants'
 import { useAuthContext } from '../contexts/AuthContext'
 import { syncAddList, syncUpdateList, syncDeleteList } from '../lib/sync'
 
-export function useLists() {
+export function useLists(categoryId?: string | null) {
   const { user } = useAuthContext()
-  const lists = useLiveQuery(() => db.lists.orderBy('order').toArray()) ?? []
+  const lists = useLiveQuery(
+    async () => {
+      if (!categoryId) return []
+      const all = await db.lists.where('categoryId').equals(categoryId).toArray()
+      return all.sort((a, b) => a.order - b.order)
+    },
+    [categoryId],
+  ) ?? []
 
-  async function addList(name: string, icon: string, color?: string): Promise<string> {
+  async function addList(name: string, icon: string, color?: string, targetCategoryId?: string): Promise<string> {
+    const cat = targetCategoryId ?? categoryId
+    if (!cat) throw new Error('No category selected')
     const id = nanoid()
     const maxOrder = lists.length > 0 ? Math.max(...lists.map((l) => l.order)) : 0
     const assignedColor = color ?? getColorForIndex(lists.length).key
 
     const list: TaskList = {
       id,
+      categoryId: cat,
       name,
       icon,
       color: assignedColor,
@@ -29,7 +39,7 @@ export function useLists() {
     return id
   }
 
-  async function updateList(id: string, updates: Partial<Pick<TaskList, 'name' | 'icon' | 'color' | 'order'>>) {
+  async function updateList(id: string, updates: Partial<Pick<TaskList, 'name' | 'icon' | 'color' | 'order' | 'categoryId'>>) {
     await db.lists.update(id, updates)
     if (user) syncUpdateList(user.id, id, updates)
   }
@@ -43,7 +53,10 @@ export function useLists() {
   }
 
   async function findListByName(name: string): Promise<TaskList | undefined> {
-    return db.lists.where('name').equalsIgnoreCase(name).first()
+    if (!categoryId) return undefined
+    const matches = await db.lists.where('categoryId').equals(categoryId).toArray()
+    const lower = name.toLowerCase()
+    return matches.find((l) => l.name.toLowerCase() === lower)
   }
 
   async function reorderLists(orderedIds: string[]) {
