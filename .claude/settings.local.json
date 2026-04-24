@@ -17,9 +17,14 @@
       "Bash(git commit -m ':*)",
       "Bash(git push:*)",
       "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models?key=test\")",
-      "Bash(asdf local *)",
-      "Bash(asdf set *)",
-      "Bash(git log *)"
+      "Bash(curl -s \"https://ai-notes-kappa-sepia.vercel.app/manifest.webmanifest\")",
+      "WebFetch(domain:ai-notes-kappa-sepia.vercel.app)",
+      "Bash(wc -l /c/Users/brous/Desktop/Dev/AiNotes/src/components/*.tsx)",
+      "Bash(git -C /c/Users/brous/Desktop/Dev/AiNotes log --oneline -15)",
+      "Bash(wc:*)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(git reset *)"
     ]
   },
   "remote": {

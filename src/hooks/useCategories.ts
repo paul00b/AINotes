@@ -62,15 +62,11 @@ export function useCategories() {
   }
 
   async function deleteCategory(id: string) {
-    await db.transaction('rw', db.categories, db.lists, db.tasks, async () => {
-      const lists = await db.lists.where('categoryId').equals(id).toArray()
-      const listIds = lists.map((l) => l.id)
-      if (listIds.length > 0) {
-        await db.tasks.where('listId').anyOf(listIds).delete()
-        await db.lists.bulkDelete(listIds)
-      }
-      await db.categories.delete(id)
-    })
+    const listCount = await db.lists.where('categoryId').equals(id).count()
+    if (listCount > 0) {
+      throw new Error('CATEGORY_NOT_EMPTY')
+    }
+    await db.categories.delete(id)
     if (user) syncDeleteCategory(user.id, id)
   }
 

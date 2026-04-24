@@ -54,7 +54,9 @@
     "saved": "Enregistré !",
     "exportData": "Exporter mes données",
     "deleteData": "Supprimer toutes les données",
-    "deleteDataConfirm": "Êtes-vous sûr ? Cette action est irréversible."
+    "deleteDataConfirm": "Êtes-vous sûr ? Cette action est irréversible.",
+    "categories": "Catégories",
+    "categoriesDescription": "Seules les catégories vides peuvent être supprimées."
   },
   "setup": {
     "welcome": "Bienvenue sur AiNotes",
@@ -98,7 +100,8 @@
     "add": "Ajouter une catégorie",
     "namePlaceholder": "Nom…",
     "renamePrompt": "Nouveau nom de la catégorie",
-    "deleteConfirm": "Supprimer la catégorie \"{{name}}\" et toutes ses listes ?",
-    "cannotDeleteLast": "Impossible de supprimer la dernière catégorie."
+    "deleteConfirm": "Supprimer la catégorie \"{{name}}\" ?",
+    "cannotDeleteLast": "Impossible de supprimer la dernière catégorie.",
+    "cannotDeleteFilled": "Cette catégorie contient des listes. Déplacez-les ou supprimez-les avant de supprimer la catégorie."
   }
 }

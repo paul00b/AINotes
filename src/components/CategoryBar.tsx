@@ -8,7 +8,7 @@ interface CategoryBarProps {
   onSelect: (id: string) => void
   onAdd: (name: string) => void
   onRename: (id: string, name: string) => void
-  onDelete: (id: string) => void
+  onDelete: (id: string) => void | Promise<void>
 }
 
 export function CategoryBar({
@@ -60,7 +60,11 @@ export function CategoryBar({
       return
     }
     if (window.confirm(t('category.deleteConfirm', { name: cat.name }))) {
-      onDelete(cat.id)
+      Promise.resolve(onDelete(cat.id)).catch((err: unknown) => {
+        if (err instanceof Error && err.message === 'CATEGORY_NOT_EMPTY') {
+          window.alert(t('category.cannotDeleteFilled'))
+        }
+      })
     }
   }
 

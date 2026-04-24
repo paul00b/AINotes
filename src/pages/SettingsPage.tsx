@@ -1,19 +1,46 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { Layout } from '../components/Layout'
 import { STORAGE_KEYS } from '../lib/constants'
 import { db } from '../lib/db'
 import { useAuthContext } from '../contexts/AuthContext'
+import { useCategories } from '../hooks/useCategories'
 
 export function SettingsPage() {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
   const { user, signOut } = useAuthContext()
+  const { categories, deleteCategory } = useCategories()
+  const allLists = useLiveQuery(() => db.lists.toArray()) ?? []
 
   const [apiKey, setApiKey] = useState(localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY) ?? '')
   const [saved, setSaved] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  function listCountFor(categoryId: string) {
+    return allLists.filter((l) => l.categoryId === categoryId).length
+  }
+
+  async function handleDeleteCategory(id: string, name: string) {
+    if (categories.length <= 1) {
+      window.alert(t('category.cannotDeleteLast'))
+      return
+    }
+    if (listCountFor(id) > 0) {
+      window.alert(t('category.cannotDeleteFilled'))
+      return
+    }
+    if (!window.confirm(t('category.deleteConfirm', { name }))) return
+    try {
+      await deleteCategory(id)
+    } catch (err) {
+      if (err instanceof Error && err.message === 'CATEGORY_NOT_EMPTY') {
+        window.alert(t('category.cannotDeleteFilled'))
+      }
+    }
+  }
 
   function handleSaveApiKey() {
     if (apiKey.trim()) {
@@ -146,6 +173,40 @@ export function SettingsPage() {
                   {lang.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Categories */}
+          <div className="glass rounded-2xl p-5 space-y-3">
+            <label className="text-sm font-medium text-gray-700">{t('settings.categories')}</label>
+            <p className="text-xs text-gray-400">{t('settings.categoriesDescription')}</p>
+            <div className="space-y-2">
+              {categories.map((cat) => {
+                const count = listCountFor(cat.id)
+                const disabled = count > 0 || categories.length <= 1
+                return (
+                  <div
+                    key={cat.id}
+                    className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-white/60"
+                  >
+                    <div className="min-w-0 flex-1 flex items-center gap-2">
+                      <p className="text-sm text-gray-700 truncate">{cat.name}</p>
+                      <span className="text-xs text-gray-400 flex-shrink-0">{count}</span>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                      disabled={disabled}
+                      className={`text-sm font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                        disabled
+                          ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
+                          : 'text-red-500 bg-red-50 hover:bg-red-100'
+                      }`}
+                    >
+                      {t('common.delete')}
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           </div>
 

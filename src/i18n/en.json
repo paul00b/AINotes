@@ -54,7 +54,9 @@
     "saved": "Saved!",
     "exportData": "Export my data",
     "deleteData": "Delete all data",
-    "deleteDataConfirm": "Are you sure? This action cannot be undone."
+    "deleteDataConfirm": "Are you sure? This action cannot be undone.",
+    "categories": "Categories",
+    "categoriesDescription": "Only empty categories can be deleted."
   },
   "setup": {
     "welcome": "Welcome to AiNotes",
@@ -98,7 +100,8 @@
     "add": "Add a category",
     "namePlaceholder": "Name…",
     "renamePrompt": "New category name",
-    "deleteConfirm": "Delete category \"{{name}}\" and all its lists?",
-    "cannotDeleteLast": "Cannot delete the last category."
+    "deleteConfirm": "Delete category \"{{name}}\"?",
+    "cannotDeleteLast": "Cannot delete the last category.",
+    "cannotDeleteFilled": "This category contains lists. Move or delete them before deleting the category."
   }
 }
